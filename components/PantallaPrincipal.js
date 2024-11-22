@@ -4,74 +4,77 @@ import { Accelerometer } from 'expo-sensors';
 import * as SMS from 'expo-sms';
 import * as Location from 'expo-location'; // Importa Location
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import { alertaError } from '../Helpers/helperAlert';
 
 export default function PantallaPrincipal() {
   const [subscription, setSubscription] = useState(null);
   const [numeroEmergencia, setNumeroEmergencia] = useState('');
-  const [locationPermission, setLocationPermission] = useState(false);
+  const storedPermission = AsyncStorage.getItem('locationPermission');
+  const [locationPermission, setLocationPermission] = useState(storedPermission);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const obtenerNumeroEmergencia = async () => {
-        const numero = await AsyncStorage.getItem('numeroEmergencia');
-        setNumeroEmergencia(numero);
-        console.log(numero); 
-      };
+  useEffect(() => {
+    // Solicitar permiso de ubicación al montar el componente
+    const obtenerNumeroEmergencia = async () => {
+      const numero = await AsyncStorage.getItem('numeroEmergencia');
+      setNumeroEmergencia(numero);
+      console.log(numero);
+    };
 
-      obtenerNumeroEmergencia();
+    obtenerNumeroEmergencia();
 
-      const startListening = () => {
-        const sub = Accelerometer.addListener(accelerometerData => {
-          const { x, y, z } = accelerometerData;
-          const shakeThreshold = 1.5; // Ajusta el umbral según tus necesidades
+    // Inicializar el listener para el acelerómetro solo una vez
+    const startListening = () => {
+      const sub = Accelerometer.addListener(accelerometerData => {
+        const { x, y, z } = accelerometerData;
+        const shakeThreshold = 1.5; // Ajusta el umbral según tus necesidades
 
-          if (Math.abs(x) > shakeThreshold || Math.abs(y) > shakeThreshold || Math.abs(z) > shakeThreshold) {
-            handleEmergency(); 
-          }
-        });
-
-        setSubscription(sub);
-      };
-
-      startListening();
-
-      // Limpiar suscripción al desmontar el componente
-      return () => {
-        if (subscription) {
-          subscription.remove();
+        if (Math.abs(x) > shakeThreshold || Math.abs(y) > shakeThreshold || Math.abs(z) > shakeThreshold) {
+          handleEmergency(); 
         }
-      };
-    }, []) 
-  );
+      });
+
+      setSubscription(sub);
+    };
+
+    startListening();
+
+    // Limpiar la suscripción al desmontar el componente
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, []); // Solo se ejecuta una vez al montar el componente
 
   const requestLocationPermission = async () => {
-    const storedPermission = await AsyncStorage.getItem('locationPermission');
-    
-    if (storedPermission !== null) {
-      // Si el permiso está almacenado, usalo directamente
-      setLocationPermission(storedPermission === 'granted');
+    if (locationPermission === 'granted') {
+      return; // Salimos si ya tenemos el permiso concedido
+    }
+  
+    // Si no está almacenado o es 'denied', solicitamos el permiso
+    const { status } = await Location.requestForegroundPermissionsAsync();
+  
+    if (status === 'granted') {
+      setLocationPermission(true);
+      await AsyncStorage.setItem('locationPermission', 'granted');
     } else {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      setLocationPermission(status === 'granted');
-      await AsyncStorage.setItem('locationPermission', status === 'granted' ? 'granted' : 'denied');
-      
-      if (status !== 'granted') {
-        Alert.alert('Permiso de ubicación denegado', 'No se puede acceder a la ubicación');
-      }
+      setLocationPermission(false);
+      await AsyncStorage.setItem('locationPermission', 'denied');
+      alertaError('Permiso de ubicación denegado', 'No se puede acceder a la ubicación');
     }
   };
+  
 
   const handleEmergency = async () => {
     // Verificar que se tenga permiso para acceder a la ubicación
-    if (!locationPermission) {
-      Alert.alert('Permiso de ubicación', 'No se tiene permiso para acceder a la ubicación. Por favor, habilítalo.');
+    if (locationPermission===null) {
+      alertaError('Permiso de ubicación', 'No se tiene permiso para acceder a la ubicación. Por favor, habilítalo.');
       return;
     }
 
     const numero = await AsyncStorage.getItem('numeroEmergencia'); 
     if (!numero) {
-      Alert.alert('Error', 'No se ha configurado un número de emergencia.');
+      alertaError('Error', 'No se ha configurado un número de emergencia.');
       return;
     }
 
@@ -81,21 +84,19 @@ export default function PantallaPrincipal() {
     const lon = location.coords.longitude;
 
     const fullMessage = `${message} https://www.google.com/maps?q=${lat},${lon}`;
-
+    alertaError('Redirigiendo', 'Envíe el mensaje de emergencia');
     if (await SMS.isAvailableAsync()) {
       await SMS.sendSMSAsync([numero], fullMessage);
-      Alert.alert('Mensaje enviado', 'El mensaje de emergencia ha sido enviado.');
+      alertaError('Mensaje enviado', 'El mensaje de emergencia ha sido enviado.');
     } else {
-      Alert.alert('Error', 'SMS no disponible en este dispositivo.');
+      alertaError('Error', 'SMS no disponible en este dispositivo.');
     }
   };
-
-
 
   // Solicitar permisos de ubicación cuando el componente se monta
   useEffect(() => {
     requestLocationPermission();
-  }, []);
+  }, []); // Solo se ejecuta una vez al montar el componente
 
   return (
     <View style={styles.container}>
@@ -106,7 +107,6 @@ export default function PantallaPrincipal() {
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     justifyContent: 'center',

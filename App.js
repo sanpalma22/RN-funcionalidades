@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-import PantallaCambioFondo from './components/PantallaCambioFondo.js';
 import PantallaIdApp from './components/PantallaIdApp.js';
 import PantallaClima from './components/PantallaClima.js';
 import PantallaContactosList from './components/PantallaContactosList.js';
@@ -28,8 +27,6 @@ export default function App() {
               iconName = 'call';
             } else if (route.name === 'Contactos') {
               iconName = 'people';
-            } else if (route.name === 'Fondo') {
-              iconName = 'image';
             } else if (route.name === 'Id App') {
               iconName = 'qr-code';
             }
@@ -41,7 +38,6 @@ export default function App() {
         })}
       >
         <Tab.Screen name="Inicio" component={PantallaPrincipal} />
-        <Tab.Screen name="Fondo" component={PantallaCambioFondo} />
         <Tab.Screen name="Clima" component={PantallaClima} />
         <Tab.Screen name="Emergencia" component={PantallaEmergencia} />
         <Tab.Screen name="Contactos" component={PantallaContactosList} />

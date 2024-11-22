@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Contacts from 'expo-contacts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { alertaError } from '../Helpers/helperAlert';
 
 export default function PantallaContactosList() {
   const [contactos, setContactos] = useState([]);
@@ -30,10 +31,10 @@ export default function PantallaContactosList() {
             setContactos(data);
             setContactosFiltrados(data);  // Inicializamos los contactos filtrados con todos los contactos
           } else {
-            Alert.alert('No se encontraron contactos');
+            alertaError('No se encontraron contactos');
           }
         } else {
-          Alert.alert('Permiso denegado', 'No se puede acceder a los contactos');
+          alertaError('Permiso denegado', 'No se puede acceder a los contactos');
         }
       };
 

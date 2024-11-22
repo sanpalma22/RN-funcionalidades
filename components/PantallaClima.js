@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Button, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage
+import { alertaError } from '../Helpers/helperAlert';
 
 const API_KEY = 'b662851334fa787bd73ef826930e20eb'; 
 
-export default function PantallaClima({navigation}) {
+export default function PantallaClima({ navigation }) {
   const [horaActual, setHoraActual] = useState('');
   const [fechaActual, setFechaActual] = useState('');
   const [clima, setClima] = useState(null);
@@ -14,11 +16,18 @@ export default function PantallaClima({navigation}) {
   useEffect(() => {
     const obtenerUbicacionYClima = async () => {
       try {
-        // Solicitar permiso de ubicación
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          alert('Permiso de ubicación denegado');
-          return;
+        // Verifica si el permiso ya fue concedido
+        const permisoGuardado = await AsyncStorage.getItem('locationPermissionGranted');
+        
+        if (permisoGuardado === null) { // Si no se ha guardado el permiso
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            alertaError('Permiso de ubicación denegado');
+            await AsyncStorage.setItem('locationPermissionGranted', 'false');
+            return;
+          }
+          // Guarda que el permiso fue concedido
+          await AsyncStorage.setItem('locationPermissionGranted', 'true');
         }
 
         // Obtener ubicación actual

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, StyleSheet, Text, TouchableWithoutFeedback, Keyboard, Alert, TouchableOpacity } from 'react-native';
+import { alertaError } from '../Helpers/helperAlert';
 
 export default function ConfigurarEmergencia() {
   const [numero, setNumero] = useState('');
@@ -19,7 +20,7 @@ export default function ConfigurarEmergencia() {
   const validarNumero = () => {
     const regex = /^[0-9]{3,}$/; 
     if (!regex.test(numero)) {
-      Alert.alert('Error', 'Por favor ingresa un número de emergencia válido de al menos 3 dígitos.');
+      alertaError('Error', 'Por favor ingresa un número de emergencia válido de al menos 3 dígitos.');
       return false;
     }
     return true;
@@ -29,7 +30,7 @@ export default function ConfigurarEmergencia() {
     if (validarNumero()) {
       await AsyncStorage.setItem('numeroEmergencia', numero);
       setNumeroGuardado(numero); 
-      Alert.alert('Éxito', 'Número de emergencia guardado correctamente.');
+      alertaError('Éxito', 'Número de emergencia guardado correctamente.');
     }
   };
 

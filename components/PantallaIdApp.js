@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, Modal, StyleSheet } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { alertaError } from '../Helpers/helperAlert';
+import { BarCodeScanner } from 'expo';
 
 export default function PantallaIdApp() {
   const qrData = "App funcionalidades: Santiago Palma y Santino Lo Giudice";
@@ -20,9 +21,9 @@ export default function PantallaIdApp() {
 
   const handleScanButtonPress = () => {
     if (hasPermission === null) {
-      alert('Solicitando permisos de cámara...');
+      alertaError('Solicitando permisos de cámara...');
     } else if (hasPermission === false) {
-      alert('Permiso denegado. No se puede acceder a la cámara.');
+      alertaError('Permiso denegado. No se puede acceder a la cámara.');
     } else {
       setScanModalVisible(true); 
     }
